@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Expense Tracker with Sheet View</title>
+    <link rel="stylesheet" href="stylep.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Expense Tracker</h2>
+        <form id="expense-form">
+            <div class="form-group">
+                <input type="text" id="expense-name" placeholder="Expense Name" required>
+            </div>
+            <div class="form-group">
+                <input type="number" id="expense-amount" placeholder="Amount" required>
+            </div>
+            <div class="form-group">
+                <input type="date" id="expense-date" required>
+            </div>
+            <div class="form-group">
+                <select id="expense-category">
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <button type="submit" class="add-expense">Add Expense</button>
+        </form>
+        <div class="view-controls">
+            <button id="toggle-view" class="toggle-view">Toggle View</button>
+            <select id="category-filter">
+                <option value="All">All Categories</option>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Other">Other</option>
+            </select>
+            <button id="clear-all" class="clear-all">Clear All</button>
+            <button id="print-view" class="print-view">Print View</button>
+        </div>
+        <div id="expense-display">
+            <ul id="expense-list"></ul>
+            <h3 id="print-heading" style="display: none;"></h3>
+
+            <table id="expense-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th data-sort="name">Name</th>
+                        <th data-sort="amount">Amount</th>
+                        <th data-sort="category">Category</th>
+                        <th data-sort="date">Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <h3 id="print-total">Total: ₹<span id="total-amount">0</span></h3>
+        </div>
+    </div>
+
+    <script>
+        let isTableView = false;
+
+        function init() {
+            loadExpenses();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.getElementById("expense-form").addEventListener("submit", addExpense);
+            document.getElementById("toggle-view").addEventListener("click", toggleView);
+            document.getElementById("print-view").addEventListener("click", printView);
+            document.getElementById("category-filter").addEventListener("change", filterExpenses);
+            document.getElementById("clear-all").addEventListener("click", clearAllExpenses);
+            document.querySelectorAll("#expense-table th").forEach(th => th.addEventListener("click", sortTable));
+        }
+
+        function addExpense(e) {
+            e.preventDefault();
+            const name = document.getElementById("expense-name").value.trim();
+            const amount = parseFloat(document.getElementById("expense-amount").value);
+            const category = document.getElementById("expense-category").value;
+            const date = document.getElementById("expense-date").value;
+
+            if (!name || isNaN(amount) || !date) {
+                alert("Please fill all fields correctly.");
+                return;
+            }
+
+            const expense = { name, amount, category, date };
+            const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+            if (expenses.some(e => JSON.stringify(e) === JSON.stringify(expense))) {
+                alert("This expense already exists.");
+                return;
+            }
+
+            saveExpense(expense);
+            loadExpenses();
+            document.getElementById("expense-form").reset();
+        }
+
+        function saveExpense(expense) {
+            const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+            expenses.push(expense);
+            localStorage.setItem("expenses", JSON.stringify(expenses));
+        }
+
+        function loadExpenses() {
+            const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+            if (isTableView) {
+                renderTable(expenses);
+            } else {
+                renderList(expenses);
+            }
+            updateTotal();
+        }
+
+        function renderList(expenses) {
+            const expenseList = document.getElementById("expense-list");
+            expenseList.innerHTML = "";
+            expenses.forEach(addExpenseToUI);
+        }
+
+        function addExpenseToUI(expense) {
+            const li = document.createElement("li");
+            li.innerHTML = `${expense.name} - ₹${expense.amount} (${expense.category}) - ${expense.date}`;
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.addEventListener("click", () => deleteExpense(expense));
+            li.appendChild(deleteButton);
+
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.classList.add("edit");
+            editButton.addEventListener("click", () => editExpense(expense));
+            li.appendChild(editButton);
+
+            document.getElementById("expense-list").appendChild(li);
+        }
+
+        function deleteExpense(expense) {
+            let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+            expenses = expenses.filter(e => JSON.stringify(e) !== JSON.stringify(expense));
+            localStorage.setItem("expenses", JSON.stringify(expenses));
+            loadExpenses();
+        }
+
+        function editExpense(expense) {
+            document.getElementById("expense-name").value = expense.name;
+            document.getElementById("expense-amount").value = expense.amount;
+            document.getElementById("expense-category").value = expense.category;
+            document.getElementById("expense-date").value = expense.date;
+
+            deleteExpense(expense);
+        }
+
+        function updateTotal(expensesList = null) {
+            const expenses = expensesList || JSON.parse(localStorage.getItem("expenses")) || [];
+            const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            document.getElementById("total-amount").innerText = total.toFixed(2);
+        }
+
+        function filterExpenses() {
+            const category = document.getElementById("category-filter").value;
+            const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+            const filteredExpenses = category === "All" ? expenses : expenses.filter(e => e.category === category);
+
+            if (isTableView) {
+                renderTable(filteredExpenses);
+            } else {
+                renderList(filteredExpenses);
+            }
+            updateTotal(filteredExpenses);
+        }
+
+        function clearAllExpenses() {
+            if (confirm("Are you sure you want to clear all expenses?")) {
+                localStorage.removeItem("expenses");
+                loadExpenses();
+            }
+        }
+
+        function toggleView() {
+            isTableView = !isTableView;
+            document.getElementById("expense-list").style.display = isTableView ? "none" : "block";
+            document.getElementById("expense-table").style.display = isTableView ? "table" : "none";
+            loadExpenses();
+        }
+
+        function printView() {
+    const choice = prompt(
+        "Choose time filter:\n1 - Daily\n2 - Weekly\n3 - Biweekly\n4 - Monthly\n5 - Quarterly\n6 - Yearly\n7 - Quarter 1 (Jan–Mar)\n8 - Quarter 2 (Apr–Jun)\n9 - Quarter 3 (Jul–Sep)\n10 - Quarter 4 (Oct–Dec)"
+    );
+
+    const filterLabels = {
+        "1": "Daily Expenses",
+        "2": "Weekly Expenses",
+        "3": "Biweekly Expenses",
+        "4": "Monthly Expenses",
+        "5": "Quarterly Expenses",
+        "6": "Yearly Expenses",
+        "7": "Q1 Expenses (Jan–Mar)",
+        "8": "Q2 Expenses (Apr–Jun)",
+        "9": "Q3 Expenses (Jul–Sep)",
+        "10": "Q4 Expenses (Oct–Dec)"
+    };
+
+    const heading = document.getElementById("print-heading");
+    heading.style.display = "block";
+    heading.textContent = filterLabels[choice] || "";
+
+    const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    let filtered = [];
+
+    switch (choice) {
+        case "1": filtered = filterByTime(expenses, "daily"); break;
+        case "2": filtered = filterByTime(expenses, "weekly"); break;
+        case "3": filtered = filterByTime(expenses, "biweekly"); break;
+        case "4": filtered = filterByTime(expenses, "monthly"); break;
+        case "5": filtered = filterByTime(expenses, "quarterly"); break;
+        case "6": filtered = filterByTime(expenses, "yearly"); break;
+        case "7": filtered = filterByQuarter(expenses, 1); break;
+        case "8": filtered = filterByQuarter(expenses, 2); break;
+        case "9": filtered = filterByQuarter(expenses, 3); break;
+        case "10": filtered = filterByQuarter(expenses, 4); break;
+        default: alert("Invalid choice."); heading.style.display = "none"; return;
+    }
+
+    if (filtered.length === 0) {
+        alert("No expenses found in selected range.");
+        heading.style.display = "none";
+        return;
+    }
+
+    isTableView = true;
+    document.getElementById("expense-list").style.display = "none";
+    document.getElementById("expense-table").style.display = "table";
+
+    renderTable(filtered);
+    updateTotal(filtered);
+
+    setTimeout(() => {
+        window.print();
+        heading.style.display = "none"; // Hide after print
+    }, 300);
+}
+
+        function filterByTime(expenses, type) {
+            const now = new Date();
+            return expenses.filter(e => {
+                const date = new Date(e.date);
+                switch (type) {
+                    case "daily": return isSameDay(date, now);
+                    case "weekly": return isSameWeek(date, now);
+                    case "biweekly": return isSameBiWeek(date, now);
+                    case "monthly": return isSameMonth(date, now);
+                    case "quarterly": return isSameQuarter(date, now);
+                    case "yearly": return isSameYear(date, now);
+                }
+            });
+        }
+
+        function filterByQuarter(expenses, quarter) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const quarterMonths = {
+                1: [0, 1, 2], 
+                2: [3, 4, 5],  
+                3: [6, 7, 8],  
+                4: [9, 10, 11]  
+            };
+
+            return expenses.filter(e => {
+                const date = new Date(e.date);
+                return date.getFullYear() === year && quarterMonths[quarter].includes(date.getMonth());
+            });
+        }
+
+        function isSameDay(d1, d2) {
+            return d1.toDateString() === d2.toDateString();
+        }
+
+        function isSameWeek(date, now) {
+            const oneWeekAgo = new Date(now);
+            oneWeekAgo.setDate(now.getDate() - 7);
+            return date >= oneWeekAgo && date <= now;
+        }
+
+        function isSameBiWeek(date, now) {
+            const twoWeeksAgo = new Date(now);
+            twoWeeksAgo.setDate(now.getDate() - 14);
+            return date >= twoWeeksAgo && date <= now;
+        }
+
+        function isSameMonth(date, now) {
+            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+        }
+
+        function isSameQuarter(date, now) {
+            const dateQuarter = Math.floor(date.getMonth() / 3);
+            const nowQuarter = Math.floor(now.getMonth() / 3);
+            return dateQuarter === nowQuarter && date.getFullYear() === now.getFullYear();
+        }
+
+        function isSameYear(date, now) {
+            return date.getFullYear() === now.getFullYear();
+        }
+
+        function renderTable(expenses) {
+            const tableBody = document.querySelector("#expense-table tbody");
+            tableBody.innerHTML = "";
+            expenses.forEach(expense => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${expense.name}</td>
+                    <td>₹${expense.amount}</td>
+                    <td>${expense.category}</td>
+                    <td>${expense.date}</td>
+                    <td>
+                        <button class="edit" data-name="${expense.name}" data-amount="${expense.amount}" data-category="${expense.category}" data-date="${expense.date}">Edit</button>
+                        <button class="delete" data-name="${expense.name}" data-amount="${expense.amount}" data-category="${expense.category}" data-date="${expense.date}">Delete</button>
+                    </td>
+                `;
+            });
+            addTableButtonListeners();
+        }
+
+        function addTableButtonListeners() {
+            document.querySelectorAll("#expense-table .edit").forEach(button => button.addEventListener("click", editTableExpense));
+            document.querySelectorAll("#expense-table .delete").forEach(button => button.addEventListener("click", deleteTableExpense));
+        }
+
+        function editTableExpense(e) {
+            const button = e.target;
+            const expense = {
+                name: button.dataset.name,
+                amount: parseFloat(button.dataset.amount),
+                category: button.dataset.category,
+                date: button.dataset.date
+            };
+            editExpense(expense);
+        }
+
+        function deleteTableExpense(e) {
+            const button = e.target;
+            const expense = {
+                name: button.dataset.name,
+                amount: parseFloat(button.dataset.amount),
+                category: button.dataset.category,
+                date: button.dataset.date
+            };
+            deleteExpense(expense);
+        }
+
+        function sortTable(e) {
+            const column = e.target.dataset.sort;
+            if (!column) return;
+
+            let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+            expenses.sort((a, b) => {
+                if (column === "amount") {
+                    return a[column] - b[column];
+                } else if (column === "date") {
+                    return new Date(a[column]) - new Date(b[column]);
+                } else {
+                    return a[column].localeCompare(b[column]);
+                }
+            });
+
+            renderTable(expenses);
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+</html>

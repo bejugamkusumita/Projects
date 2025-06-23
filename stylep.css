@@ -1,0 +1,260 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ======================== */
+/*         PRINT VIEW       */
+/* ======================== */
+@media print {
+    * {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    #print-heading,
+    #expense-table,
+    #expense-table *,
+    #print-total,
+    #print-total * {
+        visibility: visible;
+    }
+
+    #print-heading {
+        display: block !important;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 0 0 10px 0;
+        text-align: center;
+        page-break-before: always; /* Starts on new page */
+    }
+
+    #expense-table {
+        width: 100%;
+        margin: 0;
+        position: relative;
+        page-break-inside: avoid;
+        margin-top: 40px; /* Adjusted to prevent overflow */
+    }
+
+    #expense-table th:last-child,
+    #expense-table td:last-child {
+        display: none;
+    }
+
+    #expense-table tr {
+        page-break-inside: avoid;
+    }
+
+    #print-total {
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 20px;
+        position: relative;
+        page-break-before: auto; /* Adjust as needed */
+    }
+
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Ensure max height is controlled */
+    body {
+        max-height: 100%;
+    }
+
+    #expense-table {
+        max-height: calc(100% - 140px); /* Adjust based on your header and footer size */
+        overflow-y: auto;
+    }
+}
+
+/* ======================== */
+/*     GENERAL STYLING      */
+/* ======================== */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f0f4f8;
+}
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================== */
+/*        FORM STYLING      */
+/* ======================== */
+#expense-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    width: 100%;
+}
+
+#expense-form input,
+#expense-form select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #a0aec0;
+    border-radius: 5px;
+    width: 100%;
+}
+
+#expense-form button.add-expense {
+    padding: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    background: #4a90e2;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#expense-form button.add-expense:hover {
+    background: #357abd;
+}
+
+/* ======================== */
+/*     VIEW CONTROLS        */
+/* ======================== */
+.view-controls {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.view-controls button,
+.view-controls select {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #a0aec0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.view-controls .toggle-view {
+    background: #718096;
+    color: white;
+}
+
+.view-controls .toggle-view:hover {
+    background: #5a6268;
+}
+
+.view-controls .print-view {
+    background: #2bb673;
+    color: white;
+}
+
+.view-controls .print-view:hover {
+    background: #219653;
+}
+
+.view-controls .clear-all {
+    background: #e53e3e;
+    color: white;
+}
+
+.view-controls .clear-all:hover {
+    background: #c53030;
+}
+
+/* ======================== */
+/*      EXPENSE LIST        */
+/* ======================== */
+ul#expense-list {
+    list-style: none;
+    padding: 0;
+}
+
+ul#expense-list li {
+    background: #edf2f7;
+    margin: 5px 0;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 5px;
+}
+
+ul#expense-list li button {
+    padding: 5px 10px;
+    margin-left: 5px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+ul#expense-list li .edit {
+    background: #f6ad55;
+    color: #2d3748;
+}
+
+ul#expense-list li .edit:hover {
+    background: #ed8936;
+}
+
+ul#expense-list li .delete {
+    background: #e53e3e;
+    color: white;
+}
+
+ul#expense-list li .delete:hover {
+    background: #c53030;
+}
+
+/* ======================== */
+/*     TABLE STYLING        */
+/* ======================== */
+table#expense-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table#expense-table th,
+table#expense-table td {
+    border: 1px solid #cbd5e0;
+    padding: 8px;
+    text-align: left;
+}
+
+table#expense-table th {
+    background-color: #e2e8f0;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+table#expense-table th:hover {
+    background-color: #d1d9e6;
+}
