@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Contact Us - Product Catalog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    button {
+      background: #0078d7;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+    .contact-info {
+      margin-top: 30px;
+      font-size: 0.95em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Contact Us</h2>
+    <form id="redirectForm">
+      <label for="name">Name *</label>
+      <input type="text" id="name" required>
+
+      <label for="email">Email *</label>
+      <input type="email" id="email" required />
+
+      <label for="feedback">Feedback *</label>
+      <textarea id="feedback" required></textarea>
+
+      <button type="submit">Send Message</button>
+    </form>
+
+    <div class="contact-info">
+      <p><strong>Email:</strong> support@productcatalog.com</p>
+      <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('redirectForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = encodeURIComponent(document.getElementById('name').value.trim());
+      const email = encodeURIComponent(document.getElementById('email').value.trim());
+      const feedback = encodeURIComponent(document.getElementById('feedback').value.trim());
+
+      const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLScabsB__-Z14II6_4XbLGFsWM2I8V9isN8hsYV-0t22pZg_dA/viewform";
+
+      // Replace the following IDs with the actual ones from your form
+      const redirectUrl = `${baseUrl}?usp=pp_url&entry.412605086=${email}&entry.1950048815=${feedback}&entry.1234567890=${name}`;
+
+      window.open(redirectUrl, '_blank');
+    });
+  </script>
+</body>
+</html>
