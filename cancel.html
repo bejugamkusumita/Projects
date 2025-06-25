@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cancel Booking | FoodieFy</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>❌ Cancel Booking</h1>
+  <div class="container" id="booking-list"></div>
+  <p id="status-msg"></p>
+
+  <script>
+    function cancelBooking(date, slot) {
+      let booked = JSON.parse(localStorage.getItem(date)) || [];
+      booked = booked.filter(s => s !== slot);
+      if (booked.length > 0) {
+        localStorage.setItem(date, JSON.stringify(booked));
+      } else {
+        localStorage.removeItem(date);
+      }
+      document.getElementById("status-msg").textContent = `❌ Booking cancelled for ${date} at ${slot}`;
+      loadBookings();
+    }
+
+    function loadBookings() {
+      const container = document.getElementById("booking-list");
+      container.innerHTML = "";
+      const allDates = Object.keys(localStorage);
+
+      if (allDates.length === 0) {
+        container.innerHTML = "<p>No bookings found.</p>";
+        return;
+      }
+
+      allDates.forEach(date => {
+        const slots = JSON.parse(localStorage.getItem(date));
+        slots.forEach(slot => {
+          const item = document.createElement("div");
+          item.innerHTML = `📅 ${date} - 🕒 ${slot} <button onclick="cancelBooking('${date}', '${slot}')">Cancel</button>`;
+          container.appendChild(item);
+        });
+      });
+    }
+
+    window.onload = loadBookings;
+  </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Book a Table | FoodieFy</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>📝 Book a Table</h1>
+  <div class="container">
+    <label for="booking-date">Select Date:</label>
+    <input type="date" id="booking-date" />
+    <div class="slots" id="slots"></div>
+    <button onclick="confirmBooking()">Confirm Booking</button>
+    <p id="status-msg"></p>
+  </div>
+  <script>
+    const slots = ["12:00 PM", "1:00 PM", "2:00 PM", "6:00 PM", "7:00 PM", "8:00 PM"];
+    let selectedSlot = "";
+
+    function loadSlots() {
+      const date = document.getElementById("booking-date").value;
+      const container = document.getElementById("slots");
+      container.innerHTML = "";
+      if (!date) return;
+
+      const booked = JSON.parse(localStorage.getItem(date)) || [];
+
+      slots.forEach(slot => {
+        const btn = document.createElement("button");
+        btn.textContent = slot;
+        btn.className = "slot";
+        if (booked.includes(slot)) {
+          btn.disabled = true;
+          btn.classList.add("disabled");
+        }
+        btn.onclick = () => {
+          selectedSlot = slot;
+          document.querySelectorAll(".slot").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function confirmBooking() {
+      const date = document.getElementById("booking-date").value;
+      if (!date || !selectedSlot) {
+        document.getElementById("status-msg").textContent = "❗ Please select a date and a time slot.";
+        return;
+      }
+
+      const booked = JSON.parse(localStorage.getItem(date)) || [];
+      booked.push(selectedSlot);
+      localStorage.setItem(date, JSON.stringify(booked));
+
+      document.getElementById("status-msg").textContent = `✅ Booking confirmed for ${date} at ${selectedSlot}`;
+      selectedSlot = "";
+      loadSlots();
+    }
+
+    document.getElementById("booking-date").addEventListener("change", loadSlots);
+  </script>
+</body>
+</html>

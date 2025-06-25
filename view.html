@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>View Bookings | FoodieFy</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>📋 My Bookings</h1>
+  <div class="container" id="booking-list"></div>
+
+  <script>
+    function loadBookings() {
+      const container = document.getElementById("booking-list");
+      container.innerHTML = "";
+      const allDates = Object.keys(localStorage);
+
+      if (allDates.length === 0) {
+        container.innerHTML = "<p>No bookings found.</p>";
+        return;
+      }
+
+      allDates.forEach(date => {
+        const slots = JSON.parse(localStorage.getItem(date));
+        slots.forEach(slot => {
+          const item = document.createElement("p");
+          item.textContent = `📅 ${date} - 🕒 ${slot}`;
+          container.appendChild(item);
+        });
+      });
+    }
+
+    window.onload = loadBookings;
+  </script>
+</body>
+</html>

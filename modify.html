@@ -1,0 +1,95 @@
+<div class="booking-container">
+  <h2>Select Booking to Modify</h2>
+  <div id="booking-list"></div>
+  <div id="new-slot-section" style="display:none;">
+    <label>New Date: <input type="date" id="new-date"></label>
+    <div id="new-slots" class="slots-grid"></div>
+    <button onclick="applyModification()">Update Booking</button>
+  </div>
+</div>
+
+<script>
+  let currentBooking = null;
+
+  function loadBookingsForModification() {
+    const container = document.getElementById("booking-list");
+    container.innerHTML = "";
+    const allDates = Object.keys(localStorage);
+
+    if (allDates.length === 0) {
+      container.innerHTML = "<p>No bookings available to modify.</p>";
+      return;
+    }
+
+    allDates.forEach(date => {
+      const slots = JSON.parse(localStorage.getItem(date));
+      slots.forEach(slot => {
+        const btn = document.createElement("button");
+        btn.textContent = `📅 ${date} - 🕒 ${slot}`;
+        btn.onclick = () => selectBookingToModify(date, slot);
+        container.appendChild(btn);
+      });
+    });
+  }
+
+  function selectBookingToModify(date, slot) {
+    currentBooking = { date, slot };
+    document.getElementById("new-slot-section").style.display = "block";
+    document.getElementById("new-date").value = "";
+    document.getElementById("new-slots").innerHTML = "";
+  }
+
+  document.getElementById("new-date").addEventListener("change", function () {
+    const date = this.value;
+    const container = document.getElementById("new-slots");
+    container.innerHTML = "";
+    const bookedSlots = JSON.parse(localStorage.getItem(date)) || [];
+    const slots = ["12:00 PM", "1:00 PM", "2:00 PM", "6:00 PM", "7:00 PM", "8:00 PM"];
+
+    slots.forEach(slot => {
+      const btn = document.createElement("button");
+      btn.textContent = slot;
+      if (bookedSlots.includes(slot)) {
+        btn.disabled = true;
+        btn.classList.add("disabled");
+      }
+      btn.onclick = () => {
+        document.querySelectorAll("#new-slots button").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        currentBooking.newDate = date;
+        currentBooking.newSlot = slot;
+      };
+      container.appendChild(btn);
+    });
+  });
+
+  function applyModification() {
+    if (!currentBooking || !currentBooking.newDate || !currentBooking.newSlot) {
+      document.getElementById("status-msg").textContent = "❗ Please select a new date and slot.";
+      return;
+    }
+
+    // Remove old booking
+    let oldSlots = JSON.parse(localStorage.getItem(currentBooking.date)) || [];
+    oldSlots = oldSlots.filter(s => s !== currentBooking.slot);
+    if (oldSlots.length > 0) {
+      localStorage.setItem(currentBooking.date, JSON.stringify(oldSlots));
+    } else {
+      localStorage.removeItem(currentBooking.date);
+    }
+
+    // Add new booking
+    let newSlots = JSON.parse(localStorage.getItem(currentBooking.newDate)) || [];
+    newSlots.push(currentBooking.newSlot);
+    localStorage.setItem(currentBooking.newDate, JSON.stringify(newSlots));
+
+    document.getElementById("status-msg").textContent =
+      `✅ Booking updated to ${currentBooking.newDate} at ${currentBooking.newSlot}`;
+    
+    // Reset
+    document.getElementById("new-slot-section").style.display = "none";
+    loadBookingsForModification();
+  }
+
+  window.onload = loadBookingsForModification;
+</script>
