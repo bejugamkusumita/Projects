@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Connect to MongoDB Atlas (embedded password)
-mongo_uri = "mongodb+srv://Kusumita:Kusumita@2005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
+mongo_uri = "mongodb+srv://Kusumita:Kusumita%402005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
 client = MongoClient(mongo_uri)
 
 # Use a database (name it whatever you like)
