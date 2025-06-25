@@ -189,8 +189,9 @@
         </table>
         <div id="final-total"></div>
     </div>
+<!-- ... your full <head> and <style> remain unchanged ... -->
 
-   <script>
+<script>
 const cartBody = document.getElementById('cart-body');
 const proceedBtn = document.querySelector('.checkout-btn');
 const cartContainer = document.querySelector('.cart-container');
@@ -263,15 +264,18 @@ proceedBtn.addEventListener('click', () => {
         return;
     }
 
+    // Send to backend
     fetch('https://catalog12.onrender.com/add_to_cart', {
-
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(cart)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error("Server error");
+        return response.json();
+    })
     .then(data => {
         console.log(data.message);
 
@@ -299,8 +303,16 @@ proceedBtn.addEventListener('click', () => {
         });
 
         finalTotal.textContent = `Total: ₹${total.toFixed(2)}`;
+
+        // Clear cart
+        cart = [];
+        saveCart();
+    })
+    .catch(error => {
+        console.error('Error submitting cart:', error);
+        alert('Something went wrong while submitting your order. Please try again.');
     });
-}); // <-- ✅ This was missing
+});
 
 renderCart();
 
@@ -311,8 +323,8 @@ document.querySelector('.clear-btn').addEventListener('click', () => {
         renderCart();
     }
 });
+</script>
 
-
-    </script>
+   
 </body>
 </html>
