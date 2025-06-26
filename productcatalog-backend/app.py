@@ -6,45 +6,77 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Connect to MongoDB Atlas (embedded password)
+# MongoDB connection
 mongo_uri = "mongodb+srv://Kusumita:Kusumita%402005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
 client = MongoClient(mongo_uri)
-
-# Use a database (name it whatever you like)
 db = client["shop"]
-cart_collection = db["cart_items"]
 
+# Collections
+cart_collection = db["cart_items"]
+user_collection = db["users"]
+
+@app.route('/')
+def home():
+    return "✅ Flask backend is live. POST to /signup or /login to manage users."
+
+# Signup route
+@app.route('/signup', methods=['POST'])
+def signup():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+
+        if user_collection.find_one({'email': email}):
+            return jsonify({"message": "Email already registered."}), 409
+
+        user_collection.insert_one({
+            "email": email,
+            "username": username,
+            "password": password  # NOTE: Hash in real apps!
+        })
+
+        return jsonify({"message": "User registered successfully!"}), 201
+    except Exception as e:
+        return jsonify({"message": "Signup error", "error": str(e)}), 500
+
+# Login route
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+
+        user = user_collection.find_one({'email': email, 'password': password})
+        if user:
+            return jsonify({
+                "message": "Login successful",
+                "username": user['username'],
+                "email": user['email']
+            }), 200
+        else:
+            return jsonify({"message": "Invalid email or password"}), 401
+    except Exception as e:
+        return jsonify({"message": "Login error", "error": str(e)}), 500
+
+# Existing cart endpoint
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({"message": "No data received"}), 400
-
         for item in data:
-            name = item['name']
-            price = float(item['price'])
-            quantity = int(item['quantity'])
-            subtotal = price * quantity
-
-            document = {
-                "product_name": name,
-                "price": price,
-                "quantity": quantity,
-                "subtotal": subtotal
-            }
-
-            cart_collection.insert_one(document)
-
+            cart_collection.insert_one({
+                "product_name": item['name'],
+                "price": float(item['price']),
+                "quantity": int(item['quantity']),
+                "subtotal": float(item['price']) * int(item['quantity'])
+            })
         return jsonify({"message": "Cart items added to MongoDB successfully!"}), 201
-
     except Exception as e:
-        print("Error:", e)
-        return jsonify({"message": "Error saving cart items", "error": str(e)}), 500
-@app.route('/')
-def home():
-    return "✅ Flask backend is live. POST to /add_to_cart to save cart data."
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+        return jsonify({"message": "Cart saving error", "error": str(e)}), 500
 
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
