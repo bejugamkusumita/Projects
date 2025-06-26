@@ -254,9 +254,26 @@ function attachEventListeners() {
     });
 }
 
-function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
+function saveCartToDB(userId) {
+    fetch("https://productcatalog-backend.onrender.com//add_to_cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            items: cart  // cart should be an array of objects
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Cart saved:", data);
+    })
+    .catch(error => {
+        console.error("Error saving cart:", error);
+    });
 }
+
 
 proceedBtn.addEventListener('click', () => {
     if (cart.length === 0) {
@@ -264,7 +281,7 @@ proceedBtn.addEventListener('click', () => {
         return;
     }
 
-    fetch('https://catalog12.onrender.com/add_to_cart', {
+    fetch('https://productcatalog-backend.onrender.com/add_to_cart', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
