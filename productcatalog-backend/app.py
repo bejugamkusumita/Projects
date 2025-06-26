@@ -85,7 +85,7 @@ def login():
 
 
 # ✅ Get current user route
-const user_id = "kusumita123"; // Get this from login/session ideally
+const user_id = "kusumita123" // Get this from login/session ideally
 
 window.addEventListener('DOMContentLoaded', () => {
     fetch(`https://catalog12.onrender.com/get_cart?user_id=${user_id}`)
