@@ -4,8 +4,13 @@ from pymongo import MongoClient
 import os
 
 app = Flask(__name__)
-CORS(app, origins=["https://productcatalog-xwre.onrender.com"], supports_credentials=True)
 
+# ✅ Updated CORS configuration
+CORS(app,
+     resources={r"/*": {"origins": "https://productcatalog-xwre.onrender.com"}},
+     supports_credentials=True,
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
 
 # MongoDB connection
 mongo_uri = "mongodb+srv://Kusumita:Kusumita%402005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
@@ -21,8 +26,10 @@ def home():
     return "✅ Flask backend is live. POST to /signup or /login to manage users."
 
 # Signup route
-@app.route('/signup', methods=['POST'])
+@app.route('/signup', methods=['POST', 'OPTIONS'])
 def signup():
+    if request.method == 'OPTIONS':
+        return '', 204  # Handle preflight
     try:
         data = request.get_json()
         email = data.get('email')
@@ -43,8 +50,10 @@ def signup():
         return jsonify({"message": "Signup error", "error": str(e)}), 500
 
 # Login route
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST', 'OPTIONS'])  # ✅ Added OPTIONS
 def login():
+    if request.method == 'OPTIONS':
+        return '', 204  # ✅ Respond to preflight
     try:
         data = request.get_json()
         email = data.get('email')
@@ -62,9 +71,11 @@ def login():
     except Exception as e:
         return jsonify({"message": "Login error", "error": str(e)}), 500
 
-# Existing cart endpoint
-@app.route('/add_to_cart', methods=['POST'])
+# Add to cart route
+@app.route('/add_to_cart', methods=['POST', 'OPTIONS'])  # optional OPTIONS for safety
 def add_to_cart():
+    if request.method == 'OPTIONS':
+        return '', 204
     try:
         data = request.get_json()
         for item in data:
