@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # ✅ Updated CORS configuration
 CORS(app,
-     resources={r"/*": {"origins": "https://productcatalog-xwre.onrender.com"}},
+     resources={r"/*": {"origins": "https://productcatalog-frontend-r2j4.onrender.com"}},
      supports_credentials=True,
      methods=["GET", "POST", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
