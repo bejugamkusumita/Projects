@@ -85,10 +85,24 @@ def login():
 
 
 # ✅ Get current user route
-@app.route("/get_user", methods=["GET"])
-def get_user():
-    username = session.get("username", "Guest")
-    return jsonify({"username": username})
+const user_id = "kusumita123"; // Get this from login/session ideally
+
+window.addEventListener('DOMContentLoaded', () => {
+    fetch(`https://catalog12.onrender.com/get_cart?user_id=${user_id}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.cart && data.cart.length > 0) {
+                cart = data.cart;
+                saveCart();  // save to localStorage
+            }
+            renderCart();
+        })
+        .catch(err => {
+            console.error('Error loading saved cart:', err);
+            renderCart(); // fallback to empty localStorage
+        });
+});
+
 
 
 # ✅ Add to cart route - user specific
