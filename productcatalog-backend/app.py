@@ -26,6 +26,7 @@ def home():
     return "✅ Flask backend is live. POST to /signup or /login to manage users."
 
 # Signup route
+
 @app.route('/signup', methods=['POST', 'OPTIONS'])
 def signup():
     if request.method == 'OPTIONS':
@@ -70,6 +71,11 @@ def login():
             return jsonify({"message": "Invalid email or password"}), 401
     except Exception as e:
         return jsonify({"message": "Login error", "error": str(e)}), 500
+         @app.route("/get_user", methods=["GET"])
+def get_user():
+    username = session.get("username", "Guest")
+    return jsonify({"username": username})
+
 
 # Add to cart route
 @app.route('/add_to_cart', methods=['POST', 'OPTIONS'])  # optional OPTIONS for safety
