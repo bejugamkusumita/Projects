@@ -80,28 +80,37 @@ def login():
 @app.route('/add_to_cart', methods=['POST', 'OPTIONS'])
 def add_to_cart():
     if request.method == 'OPTIONS':
-        return '', 204  # Preflight
-
-    if 'email' not in session:
-        return jsonify({"message": "Unauthorized. Please log in."}), 401
+        return '', 204  # CORS preflight handled here
 
     try:
-        email = session['email']
         data = request.get_json()
+        print("🛒 Received cart:", data)
+
+        # 🛑 Check for empty or malformed data
+        if not data or not isinstance(data, list):
+            return jsonify({"message": "Invalid cart format. Expected a list."}), 400
 
         for item in data:
+            print("📦 Inserting item:", item)
+
+            # Optional: Validate each item
+            if not all(k in item for k in ('name', 'price', 'quantity')):
+                return jsonify({"message": "Cart item missing required fields."}), 400
+
+            # Insert into MongoDB
             cart_collection.insert_one({
-                "email": email,
                 "product_name": item['name'],
                 "price": float(item['price']),
                 "quantity": int(item['quantity']),
-                "subtotal": float(item['price']) * int(item['quantity']),
-                "image": item.get('image', '')
+                "subtotal": float(item['price']) * int(item['quantity'])
             })
 
         return jsonify({"message": "Cart items added to MongoDB successfully!"}), 201
+
     except Exception as e:
+        print("❌ ERROR while saving cart:", str(e))
         return jsonify({"message": "Cart saving error", "error": str(e)}), 500
+
 
 
 # ✅ Optional: Get cart route (for future use)
