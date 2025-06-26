@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Vibrant Login Page</title>
+  <title>Login / Signup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -28,59 +28,21 @@
       0% { transform: scale(0.8); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
-    .login-container h2 {
-      margin-bottom: 24px;
-      color: #ee0979;
-      font-weight: 700;
-      letter-spacing: 1px;
+    h2 { color: #ee0979; margin-bottom: 24px; }
+    input, button {
+      width: 100%; padding: 12px; margin: 8px 0;
+      border-radius: 8px; font-size: 16px;
     }
-    form input {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border 0.2s;
+    input {
+      border: 1px solid #ccc;
     }
-    form input:focus {
-      border: 1.5px solid #ee0979;
-      outline: none;
-    }
-    form button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 16px;
+    button {
       background: linear-gradient(90deg, #ff6a00 0%, #ee0979 100%);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      color: #fff; border: none; font-weight: 600; cursor: pointer;
     }
-    form button:hover {
+    button:hover {
       background: linear-gradient(90deg, #ee0979 0%, #ff6a00 100%);
-      transform: translateY(-2px) scale(1.03);
     }
-    .divider {
-      margin: 24px 0 16px 0;
-      width: 100%;
-      text-align: center;
-      color: #bbb;
-      position: relative;
-    }
-    .divider:before, .divider:after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      width: 40%;
-      height: 1px;
-      background: #eee;
-    }
-    .divider:before { left: 0; }
-    .divider:after { right: 0; }
     .toggle-link {
       margin-top: 16px;
       font-size: 14px;
@@ -93,13 +55,15 @@
 <body>
   <div class="login-container">
     <h2 id="formTitle">Login</h2>
-    
+
+    <!-- Login Form -->
     <form id="loginForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Login</button>
     </form>
 
+    <!-- Signup Form -->
     <form id="signupForm" style="display: none;">
       <input type="email" id="signupEmail" placeholder="Email" required />
       <input type="text" id="signupUsername" placeholder="Username" required />
@@ -109,73 +73,58 @@
 
     <div class="toggle-link" onclick="toggleForms()">Don't have an account? Sign up</div>
   </div>
-<script>
-  let isLogin = true;
 
-  function toggleForms() {
-    isLogin = !isLogin;
-    document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
-    document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
-    document.getElementById('formTitle').innerText = isLogin ? 'Login' : 'Sign Up';
-    document.querySelector('.toggle-link').innerText = isLogin 
-      ? "Don't have an account? Sign up"
-      : "Already have an account? Login";
-  }
-document.getElementById('loginForm').onsubmit = function(e) {
+<script>
+let isLogin = true;
+
+function toggleForms() {
+  isLogin = !isLogin;
+  document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('formTitle').innerText = isLogin ? 'Login' : 'Sign Up';
+  document.querySelector('.toggle-link').innerText = isLogin 
+    ? "Don't have an account? Sign up"
+    : "Already have an account? Login";
+}
+
+document.getElementById('signupForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('signupEmail').value.trim();
+  const username = document.getElementById('signupUsername').value.trim();
+  const password = document.getElementById('signupPassword').value;
+
+  const res = await fetch('http://127.0.0.1:5000/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, username, password })
+  });
+
+  const result = await res.json();
+  alert(result.message);
+  if (res.status === 201) toggleForms();
+};
+
+document.getElementById('loginForm').onsubmit = async function(e) {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const found = users.find(user => user.email === email && user.password === password);
+  const res = await fetch('http://127.0.0.1:5000/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
 
-  if (found) {
+  const result = await res.json();
+  if (res.status === 200) {
+    localStorage.setItem("username", result.username);
+    localStorage.setItem("lastLoggedInEmail", result.email);
     alert('Login successful!');
-
-    const lastEmail = localStorage.getItem('lastLoggedInEmail');
-
-    // ✅ If different user, clear cart
-    if (lastEmail && lastEmail !== email) {
-      localStorage.removeItem('cart');
-    }
-
-    // ✅ Save current user info
-    localStorage.setItem("username", found.username);
-    localStorage.setItem("lastLoggedInEmail", email);  // update with current login
-
-    // ✅ Redirect
     window.location.href = 'home.html';
   } else {
-    alert('Invalid email or password.');
+    alert(result.message);
   }
 };
-
-
-
- document.getElementById('signupForm').onsubmit = function(e) {
-  e.preventDefault();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
-  const username = document.getElementById('signupUsername').value.trim();  // ✅ FIXED
-
-  let users = JSON.parse(localStorage.getItem('users')) || [];
-  if (users.some(user => user.email === email)) {
-    alert('Email is already registered.');
-    return;
-  }
-
-  // ✅ Save username too
-  users.push({ email, password, username });
-  localStorage.setItem('users', JSON.stringify(users));
-
-  alert('Account created for ' + username + '. You can now log in.');
-  toggleForms();
-};
-
-  
 </script>
-
-
-  
 </body>
 </html>
