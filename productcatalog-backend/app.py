@@ -7,19 +7,17 @@ import os
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
 
-# ✅ Enable CORS with credentials support
+# ✅ Enable CORS with credentials
 CORS(app,
      resources={r"/*": {"origins": "https://productcatalog-frontend-r2j4.onrender.com"}},
      supports_credentials=True,
      methods=["GET", "POST", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
 
-# ✅ Connect to MongoDB
+# ✅ MongoDB connection
 mongo_uri = "mongodb+srv://Kusumita:Kusumita%402005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
 client = MongoClient(mongo_uri)
 db = client["shop"]
-
-# ✅ MongoDB collections
 user_collection = db["users"]
 cart_collection = db["cart_items"]
 
@@ -33,7 +31,6 @@ def home():
 def signup():
     if request.method == 'OPTIONS':
         return '', 204
-
     try:
         data = request.get_json()
         email = data.get('email')
@@ -44,7 +41,6 @@ def signup():
             return jsonify({"message": "Email already registered."}), 409
 
         hashed_password = generate_password_hash(password)
-
         user_collection.insert_one({
             "email": email,
             "username": username,
@@ -62,7 +58,6 @@ def signup():
 def login():
     if request.method == 'OPTIONS':
         return '', 204
-
     try:
         data = request.get_json()
         email = data.get('email')
@@ -84,42 +79,34 @@ def login():
         return jsonify({"message": "Login error", "error": str(e)}), 500
 
 
-
-
-window.addEventListener('DOMContentLoaded', () => {
-    fetch(`https://catalog12.onrender.com/get_cart?user_id=${user_id}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.cart && data.cart.length > 0) {
-                cart = data.cart;
-                saveCart();  // save to localStorage
-            }
-            renderCart();
-        })
-        .catch(err => {
-            console.error('Error loading saved cart:', err);
-            renderCart(); // fallback to empty localStorage
-        });
-});
-
-
-
-# ✅ Add to cart route - user specific
+# ✅ Add to cart (session-based)
 @app.route('/add_to_cart', methods=['POST', 'OPTIONS'])
 def add_to_cart():
     if request.method == 'OPTIONS':
         return '', 204
     try:
+        email = session.get("email")
+        if not email:
+            return jsonify({"message": "User not logged in"}), 401
+
         data = request.get_json()
-        print("Received cart:", data)
-        # Save to MongoDB
-        return jsonify({"message": "Cart received successfully"}), 200
+        if not isinstance(data, list):
+            return jsonify({"message": "Invalid cart format"}), 400
+
+        # Optional: Clear old items
+        cart_collection.delete_many({"email": email})
+
+        for item in data:
+            item['email'] = email
+            cart_collection.insert_one(item)
+
+        return jsonify({"message": "Cart stored successfully"}), 200
+
     except Exception as e:
-        print("Error:", e)
-        return jsonify({"error": "Something went wrong"}), 500
+        return jsonify({"error": "Something went wrong", "details": str(e)}), 500
 
 
-# ✅ Get user-specific cart
+# ✅ Get cart (session-based)
 @app.route('/get_cart', methods=['GET'])
 def get_cart():
     try:
@@ -128,10 +115,25 @@ def get_cart():
             return jsonify({"message": "User not logged in"}), 401
 
         items = list(cart_collection.find({"email": email}, {'_id': 0, 'email': 0}))
-        return jsonify(items), 200
+        return jsonify({"cart": items}), 200
 
     except Exception as e:
         return jsonify({"message": "Cart retrieval error", "error": str(e)}), 500
+
+
+# ✅ Optional: Clear cart
+@app.route('/clear_cart', methods=['POST'])
+def clear_cart():
+    try:
+        email = session.get("email")
+        if not email:
+            return jsonify({"message": "User not logged in"}), 401
+
+        cart_collection.delete_many({"email": email})
+        return jsonify({"message": "Cart cleared successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"message": "Cart clear error", "error": str(e)}), 500
 
 
 if __name__ == '__main__':
