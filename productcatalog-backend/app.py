@@ -96,30 +96,14 @@ def get_user():
 def add_to_cart():
     if request.method == 'OPTIONS':
         return '', 204
-
     try:
-        email = session.get("email")
-        if not email:
-            return jsonify({"message": "User not logged in"}), 401
-
         data = request.get_json()
-
-        # Optional: remove previous cart items
-        cart_collection.delete_many({"email": email})
-
-        for item in data:
-            cart_collection.insert_one({
-                "email": email,
-                "product_name": item['name'],
-                "price": float(item['price']),
-                "quantity": int(item['quantity']),
-                "subtotal": float(item['price']) * int(item['quantity'])
-            })
-
-        return jsonify({"message": "Cart items added for user!"}), 201
-
+        print("Received cart:", data)
+        # Save to MongoDB
+        return jsonify({"message": "Cart received successfully"}), 200
     except Exception as e:
-        return jsonify({"message": "Cart saving error", "error": str(e)}), 500
+        print("Error:", e)
+        return jsonify({"error": "Something went wrong"}), 500
 
 
 # ✅ Get user-specific cart
