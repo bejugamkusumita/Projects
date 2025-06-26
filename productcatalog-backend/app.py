@@ -4,7 +4,8 @@ from pymongo import MongoClient
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://productcatalog-xwre.onrender.com"], supports_credentials=True)
+
 
 # MongoDB connection
 mongo_uri = "mongodb+srv://Kusumita:Kusumita%402005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
