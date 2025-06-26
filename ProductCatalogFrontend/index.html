@@ -110,73 +110,78 @@
     <div class="toggle-link" onclick="toggleForms()">Don't have an account? Sign up</div>
   </div>
 <script>
-  <script>
-const backendURL = "https://catalog12.onrender.com";  // ✅ Updated backend URL
+  let isLogin = true;
 
-let isLogin = true;
-
-function toggleForms() {
-  isLogin = !isLogin;
-  document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
-  document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
-  document.getElementById('formTitle').innerText = isLogin ? 'Login' : 'Sign Up';
-  document.querySelector('.toggle-link').innerText = isLogin 
-    ? "Don't have an account? Sign up"
-    : "Already have an account? Login";
-}
-
-// ✅ Login
-document.getElementById('loginForm').onsubmit = async function(e) {
-  e.preventDefault();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-
-  try {
-    const res = await fetch(`${backendURL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const result = await res.json();
-    if (res.status === 200) {
-      localStorage.setItem("username", result.username);
-      localStorage.setItem("lastLoggedInEmail", result.email);
-      alert("Login successful!");
-      window.location.href = "home.html";  // Redirect
-    } else {
-      alert(result.message);
-    }
-  } catch (err) {
-    alert("Error connecting to server.");
-    console.error(err);
+  function toggleForms() {
+    isLogin = !isLogin;
+    document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+    document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
+    document.getElementById('formTitle').innerText = isLogin ? 'Login' : 'Sign Up';
+    document.querySelector('.toggle-link').innerText = isLogin 
+      ? "Don't have an account? Sign up"
+      : "Already have an account? Login";
   }
-};
 
-// ✅ Signup
-document.getElementById('signupForm').onsubmit = async function(e) {
-  e.preventDefault();
-  const email = document.getElementById('signupEmail').value.trim();
-  const username = document.getElementById('signupUsername').value.trim();
-  const password = document.getElementById('signupPassword').value;
+  // ✅ Login using backend only
+  document.getElementById('loginForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
-  try {
-    const res = await fetch(`${backendURL}/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, username, password })
-    });
+    try {
+      const res = await fetch("https://catalog12.onrender.com/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    const result = await res.json();
-    alert(result.message);
-    if (res.status === 201) {
-      toggleForms(); // Switch to login form
+      const result = await res.json();
+
+      if (res.ok && result.username) {
+        alert("Login successful!");
+
+        const lastEmail = localStorage.getItem("lastLoggedInEmail");
+        if (lastEmail && lastEmail !== email) {
+          localStorage.removeItem("cart");
+        }
+
+        localStorage.setItem("username", result.username);
+        localStorage.setItem("lastLoggedInEmail", result.email);
+
+        // ✅ Always redirect to home.html
+        window.location.href = "home.html";
+      } else {
+        alert(result.message || "Invalid email or password.");
+      }
+    } catch (err) {
+      console.error("Server error:", err);
+      alert("Error connecting to server.");
     }
-  } catch (err) {
-    alert("Error connecting to server.");
-    console.error(err);
-  }
-};
+  };
+
+  // ✅ Keep signupForm as-is (localStorage-based unless you want to send to backend)
+  document.getElementById('signupForm').onsubmit = function(e) {
+    e.preventDefault();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const username = document.getElementById('signupUsername').value.trim();
+
+    let users = JSON.parse(localStorage.getItem('users')) || [];
+    if (users.some(user => user.email === email)) {
+      alert('Email is already registered.');
+      return;
+    }
+
+    users.push({ email, password, username });
+    localStorage.setItem('users', JSON.stringify(users));
+
+    alert('Account created for ' + username + '. You can now log in.');
+    toggleForms();
+  };
 </script>
+
+
 </body>
 </html>
