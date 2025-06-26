@@ -110,6 +110,7 @@
     <div class="toggle-link" onclick="toggleForms()">Don't have an account? Sign up</div>
   </div>
 <script>
+  const backendURL = "https://productcatalog-xwre.onrender.com"; // Update if backend URL changes
   let isLogin = true;
 
   function toggleForms() {
@@ -117,59 +118,65 @@
     document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
     document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
     document.getElementById('formTitle').innerText = isLogin ? 'Login' : 'Sign Up';
-    document.querySelector('.toggle-link').innerText = isLogin 
+    document.querySelector('.toggle-link').innerText = isLogin
       ? "Don't have an account? Sign up"
       : "Already have an account? Login";
   }
-document.getElementById('loginForm').onsubmit = function(e) {
-  e.preventDefault();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
 
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const found = users.find(user => user.email === email && user.password === password);
+  // Handle Signup
+  document.getElementById('signupForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const email = document.getElementById('signupEmail').value.trim();
+    const username = document.getElementById('signupUsername').value.trim();
+    const password = document.getElementById('signupPassword').value;
 
-  if (found) {
-    alert('Login successful!');
+    try {
+      const response = await fetch(`${backendURL}/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, username, password })
+      });
 
-    const lastEmail = localStorage.getItem('lastLoggedInEmail');
-
-    // ✅ If different user, clear cart
-    if (lastEmail && lastEmail !== email) {
-      localStorage.removeItem('cart');
+      const result = await response.json();
+      if (response.status === 201) {
+        alert(result.message);
+        toggleForms(); // Switch to login form
+      } else {
+        alert(result.message || "Signup failed.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to server.");
     }
+  };
 
-    // ✅ Save current user info
-    localStorage.setItem("username", found.username);
-    localStorage.setItem("lastLoggedInEmail", email);  // update with current login
+  // Handle Login
+  document.getElementById('loginForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
-    // ✅ Redirect
-    window.location.href = 'home.html';
-  } else {
-    alert('Invalid email or password.');
-  }
-};
+    try {
+      const response = await fetch(`${backendURL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-
-
- document.getElementById('signupForm').onsubmit = function(e) {
-  e.preventDefault();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
-  const username = document.getElementById('signupUsername').value.trim();  // ✅ FIXED
-
-  let users = JSON.parse(localStorage.getItem('users')) || [];
-  if (users.some(user => user.email === email)) {
-    alert('Email is already registered.');
-    return;
-  }
-
-  // ✅ Save username too
-  users.push({ email, password, username });
-  localStorage.setItem('users', JSON.stringify(users));
-
-  alert('Account created for ' + username + '. You can now log in.');
-  toggleForms();
-};
-
-  
+      const result = await response.json();
+      if (response.status === 200) {
+        alert("Login successful!");
+        localStorage.setItem("username", result.username);
+        localStorage.setItem("lastLoggedInEmail", result.email);
+        window.location.href = "home.html";
+      } else {
+        alert(result.message || "Invalid email or password.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to server.");
+    }
+  };
+</script>
+</body>
+</html>
