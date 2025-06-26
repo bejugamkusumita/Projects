@@ -5,25 +5,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
 
-# ✅ Secret key for session management
-app.secret_key = os.environ.get("SECRET_KEY", "your-secret-key")
-
-# ✅ CORS Configuration (allow frontend + credentials)
+# ✅ Enable CORS with credentials support
 CORS(app,
      resources={r"/*": {"origins": "https://productcatalog-frontend-r2j4.onrender.com"}},
      supports_credentials=True,
      methods=["GET", "POST", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
 
-# ✅ MongoDB connection
+# ✅ Connect to MongoDB
 mongo_uri = "mongodb+srv://Kusumita:Kusumita%402005@cluster1.yhsaoaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
 client = MongoClient(mongo_uri)
 db = client["shop"]
 
-# ✅ Collections
-cart_collection = db["cart_items"]
+# ✅ MongoDB collections
 user_collection = db["users"]
+cart_collection = db["cart_items"]
 
 @app.route('/')
 def home():
@@ -34,7 +32,7 @@ def home():
 @app.route('/signup', methods=['POST', 'OPTIONS'])
 def signup():
     if request.method == 'OPTIONS':
-        return '', 204  # Handle preflight
+        return '', 204
 
     try:
         data = request.get_json()
@@ -59,11 +57,11 @@ def signup():
         return jsonify({"message": "Signup error", "error": str(e)}), 500
 
 
-# ✅ Login route
+# ✅ Login route with session support
 @app.route('/login', methods=['POST', 'OPTIONS'])
 def login():
     if request.method == 'OPTIONS':
-        return '', 204  # Handle preflight
+        return '', 204
 
     try:
         data = request.get_json()
@@ -72,6 +70,7 @@ def login():
 
         user = user_collection.find_one({'email': email})
         if user and check_password_hash(user['password'], password):
+            session['email'] = user['email']
             session['username'] = user['username']
             return jsonify({
                 "message": "Login successful",
@@ -85,32 +84,57 @@ def login():
         return jsonify({"message": "Login error", "error": str(e)}), 500
 
 
-# ✅ Get current user from session
+# ✅ Get current user route
 @app.route("/get_user", methods=["GET"])
 def get_user():
     username = session.get("username", "Guest")
     return jsonify({"username": username})
 
 
-# ✅ Add to cart route
+# ✅ Add to cart route - user specific
 @app.route('/add_to_cart', methods=['POST', 'OPTIONS'])
 def add_to_cart():
     if request.method == 'OPTIONS':
         return '', 204
 
     try:
+        email = session.get("email")
+        if not email:
+            return jsonify({"message": "User not logged in"}), 401
+
         data = request.get_json()
+
+        # Optional: remove previous cart items
+        cart_collection.delete_many({"email": email})
+
         for item in data:
             cart_collection.insert_one({
+                "email": email,
                 "product_name": item['name'],
                 "price": float(item['price']),
                 "quantity": int(item['quantity']),
                 "subtotal": float(item['price']) * int(item['quantity'])
             })
-        return jsonify({"message": "Cart items added to MongoDB successfully!"}), 201
+
+        return jsonify({"message": "Cart items added for user!"}), 201
 
     except Exception as e:
         return jsonify({"message": "Cart saving error", "error": str(e)}), 500
+
+
+# ✅ Get user-specific cart
+@app.route('/get_cart', methods=['GET'])
+def get_cart():
+    try:
+        email = session.get("email")
+        if not email:
+            return jsonify({"message": "User not logged in"}), 401
+
+        items = list(cart_collection.find({"email": email}, {'_id': 0, 'email': 0}))
+        return jsonify(items), 200
+
+    except Exception as e:
+        return jsonify({"message": "Cart retrieval error", "error": str(e)}), 500
 
 
 if __name__ == '__main__':
