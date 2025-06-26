@@ -286,7 +286,7 @@ proceedBtn.addEventListener('click', () => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(cart)
+        body: JSON.stringify(cart)  // ✅ cart only
     })
     .then(response => {
         if (!response.ok) throw new Error("Server error");
